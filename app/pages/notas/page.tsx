@@ -121,43 +121,45 @@ export default function Notas() {
   }, [])
 
   // Fetch Atividades for Selected Turma
-
-  const fetchAtividades = async () => {
-    try {
-      const response = await axios.get(
-        `http://129.148.34.197:3000/api/turma/listar-atividades/${selectedTurma.id}`,
-      )
-      console.log(response.data)
-      setAtividades(response.data)
-    } catch (error) {
-      console.error('Erro ao buscar atividades:', error)
-    }
-  }
-
   useEffect(() => {
-    fetchAtividades()
-  }, [])
+    if (selectedTurma) {
+      const fetchAtividades = async () => {
+        try {
+          const response = await axios.get(
+            `http://129.148.34.197:3000/api/turma/listar-atividades/${selectedTurma.id}`,
+          )
+          setAtividades(response.data)
+        } catch (error) {
+          console.error('Erro ao buscar atividades:', error)
+        }
+      }
+      fetchAtividades()
+    } else {
+      setAtividades([])
+    }
+  }, [selectedTurma])
 
   // Fetch Alunos for Selected Atividade
   useEffect(() => {
-    if (selectedAtividade) {
-      const fetchAlunos = async () => {
-        try {
-          const idTurma = selectedTurma?.id
-          console.log(idTurma)
-          const response = await axios.get(
-            `http://129.148.34.197:3000/api/turma/listar/1`,
-          )
-          console.log(response.data['data.omitempty'].alunos)
-          setAlunos(response.data['data.omitempty'].alunos)
-        } catch (error) {
-          console.error('Erro ao buscar alunos:', error)
-        }
+    // if (selectedAtividade) {
+    const fetchAlunos = async () => {
+      try {
+        const idTurma = selectedTurma?.id
+        console.log(idTurma)
+        const response = await axios.get(
+          `http://129.148.34.197:3000/api/turma/listar/${idTurma}`,
+        )
+        // console.log(response.data['data.omitempty'].alunos)
+        setAlunos(response.data['data.omitempty'].alunos)
+        console.log(alunos)
+      } catch (error) {
+        console.error('Erro ao buscar alunos:', error)
       }
-      fetchAlunos()
-    } else {
-      setAlunos([])
     }
+    fetchAlunos()
+    // } else {
+    //   setAlunos([])
+    // }
   }, [selectedAtividade])
 
   const table = useReactTable({
@@ -255,7 +257,7 @@ export default function Notas() {
                   <TableCell>
                     <Button
                       variant="outline"
-                      onClick={() => setSelectedAtividade(atividade)}
+                      onClick={() => setSelectedNota(selectedTurma.id)}
                     >
                       Ver Alunos
                     </Button>
