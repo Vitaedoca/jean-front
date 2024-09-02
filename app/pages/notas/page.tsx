@@ -24,8 +24,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { Dialog } from '@headlessui/react'
+import toast from 'react-hot-toast'
 
-// Types
+// Tipos
 export type Turma = {
   id: number
   nome: string
@@ -46,8 +48,13 @@ export type Aluno = {
   matricula: string
 }
 
-// Columns definition
-export const columns: ColumnDef<Turma>[] = [
+export type Nota = {
+  valor: number
+  atividade: Atividade
+}
+
+// Definição das colunas
+const columns: ColumnDef<Turma>[] = [
   {
     accessorKey: 'nome',
     header: ({ column }) => (
@@ -95,17 +102,22 @@ export default function Notas() {
   const [data, setData] = useState<Turma[]>([])
   const [atividades, setAtividades] = useState<Atividade[]>([])
   const [alunos, setAlunos] = useState<Aluno[]>([])
+  const [notas, setNotas] = useState<Record<number, Nota[]>>({})
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [rowSelection, setRowSelection] = useState({})
   const [selectedTurma, setSelectedTurma] = useState<Turma | null>(null)
-  const [selectedNota, setSelectedNota] = useState<Turma | null>(null)
   const [selectedAtividade, setSelectedAtividade] = useState<Atividade | null>(
     null,
   )
+  const [selectedNotas, setSelectedNotas] = useState<Record<number, number>>({})
+  const [selectedAluno, setSelectedAluno] = useState<Aluno | null>(null)
 
-  // Fetch Turmas
+  const [isAtividadesModalOpen, setAtividadesModalOpen] = useState(false)
+  const [isAlunosModalOpen, setAlunosModalOpen] = useState(false)
+
+  // Busca Turmas
   useEffect(() => {
     const fetchTurmas = async () => {
       try {
@@ -120,7 +132,7 @@ export default function Notas() {
     fetchTurmas()
   }, [])
 
-  // Fetch Atividades for Selected Turma
+  // Busca Atividades da Turma Selecionada
   useEffect(() => {
     if (selectedTurma) {
       const fetchAtividades = async () => {
@@ -139,29 +151,69 @@ export default function Notas() {
     }
   }, [selectedTurma])
 
-  // Fetch Alunos for Selected Atividade
+  // Busca Alunos da Atividade Selecionada
   useEffect(() => {
-    // if (selectedAtividade) {
-    const fetchAlunos = async () => {
-      try {
-        const idTurma = selectedTurma?.id
-        console.log(idTurma)
-        const response = await axios.get(
-          `http://129.148.34.197:3000/api/turma/listar/${idTurma}`,
-        )
-        // console.log(response.data['data.omitempty'].alunos)
-        setAlunos(response.data['data.omitempty'].alunos)
-        console.log(alunos)
-      } catch (error) {
-        console.error('Erro ao buscar alunos:', error)
+    if (selectedAtividade && selectedTurma) {
+      const fetchAlunos = async () => {
+        try {
+          const response = await axios.get(
+            `http://129.148.34.197:3000/api/turma/listar/${selectedTurma.id}`,
+          )
+          setAlunos(response.data['data.omitempty'].alunos)
+        } catch (error) {
+          console.error('Erro ao buscar alunos:', error)
+        }
       }
+      fetchAlunos()
+    } else {
+      setAlunos([])
     }
-    fetchAlunos()
-    // } else {
-    //   setAlunos([])
-    // }
-  }, [selectedAtividade])
+  }, [selectedAtividade, selectedTurma])
 
+  // Busca Notas dos Alunos
+  useEffect(() => {
+    if (alunos.length > 0) {
+      const fetchNotas = async () => {
+        try {
+          const fetchedNotas: Record<number, Nota[]> = {}
+          for (const aluno of alunos) {
+            const response = await axios.get(
+              `http://129.148.34.197:3000/api/nota/listar/${aluno.id}`,
+            )
+            fetchedNotas[aluno.id] = response.data['data.omitempty']
+          }
+          setNotas(fetchedNotas)
+        } catch (error) {
+          console.error('Erro ao buscar notas:', error)
+        }
+      }
+      fetchNotas()
+    }
+  }, [alunos])
+
+  // Submete Notas
+  const handleSubmitNotas = async () => {
+    try {
+      await Promise.all(
+        Object.keys(selectedNotas).map((alunoId) =>
+          axios.post('http://129.148.34.197:3000/api/nota/criarNota', {
+            Valor: selectedNotas[parseInt(alunoId)],
+            alunoId: parseInt(alunoId),
+            AtividadeId: selectedAtividade?.id,
+          }),
+        ),
+      )
+      setAlunosModalOpen(false)
+      setAtividadesModalOpen(false)
+      return toast.success('Nota enviadas com sucesso!!')
+    } catch (error) {
+      setAlunosModalOpen(false)
+      setAtividadesModalOpen(false)
+      return toast.error('Erro! Já existe nota!!')
+    }
+  }
+
+  // Configuração da Tabela
   const table = useReactTable({
     data,
     columns,
@@ -217,7 +269,10 @@ export default function Notas() {
             <TableRow
               key={row.id}
               className="cursor-pointer"
-              onClick={() => setSelectedTurma(row.original)}
+              onClick={() => {
+                setSelectedTurma(row.original)
+                setAtividadesModalOpen(true)
+              }}
             >
               {row.getVisibleCells().map((cell) => (
                 <TableCell key={cell.id}>
@@ -227,7 +282,10 @@ export default function Notas() {
               <TableCell>
                 <Button
                   variant="outline"
-                  onClick={() => setSelectedTurma(row.original)}
+                  onClick={() => {
+                    setSelectedTurma(row.original)
+                    setAtividadesModalOpen(true)
+                  }}
                 >
                   Ver Atividades
                 </Button>
@@ -237,65 +295,124 @@ export default function Notas() {
         </TableBody>
       </Table>
 
-      {selectedTurma && (
-        <div className="mt-8">
-          <h3 className="text-lg font-semibold">Atividades da Turma</h3>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>Valor</TableHead>
-                <TableHead>Data</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {atividades.map((atividade) => (
-                <TableRow key={atividade.id}>
-                  <TableCell>{atividade.nome}</TableCell>
-                  <TableCell>{atividade.valor}</TableCell>
-                  <TableCell>{atividade.data}</TableCell>
-                  <TableCell>
-                    <Button
-                      variant="outline"
-                      onClick={() => setSelectedNota(selectedTurma.id)}
+      {/* Modal de Atividades */}
+      <Dialog
+        open={isAtividadesModalOpen}
+        onClose={() => setAtividadesModalOpen(false)}
+        className="fixed inset-0 z-10 overflow-y-auto"
+      >
+        <div className="flex items-center justify-center min-h-screen px-4">
+          <div className="relative bg-white rounded-lg shadow-xl w-full max-w-lg p-6">
+            <Dialog.Title className="text-lg font-medium leading-6 text-gray-900">
+              Atividades da Turma {selectedTurma?.nome}
+            </Dialog.Title>
+            <Dialog.Description className="mt-2 text-sm text-gray-500">
+              Selecione uma atividade para adicionar notas.
+            </Dialog.Description>
+            <div className="mt-4">
+              {atividades && atividades.length > 0 ? (
+                <ul className="space-y-2">
+                  {atividades.map((atividade) => (
+                    <li
+                      key={atividade.id}
+                      className="flex justify-between items-center"
                     >
-                      Ver Alunos
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                      <span>{atividade.nome}</span>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setSelectedAtividade(atividade)
+                          setAlunosModalOpen(true)
+                        }}
+                      >
+                        Ver Alunos
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="text-gray-500">
+                  Nenhuma atividade encontrada para esta turma.
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-      )}
+      </Dialog>
 
-      {selectedNota && (
-        <div className="mt-8">
-          <h3 className="text-lg font-semibold">Alunos da Atividade</h3>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nome</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {alunos.map((aluno) => (
-                <TableRow key={aluno.id}>
-                  <TableCell>{aluno.nome}</TableCell>
-                  <TableCell>
-                    <Button
-                      variant="outline"
-                      // onClick={() => setSelectedNota(aluno)}
+      {/* Modal de Alunos */}
+      <Dialog
+        open={isAlunosModalOpen}
+        onClose={() => setAlunosModalOpen(false)}
+        className="fixed inset-0 z-10 overflow-y-auto"
+      >
+        <div className="flex items-center justify-center min-h-screen px-4">
+          <div className="relative bg-white rounded-lg shadow-xl w-full max-w-lg p-6">
+            <Dialog.Title className="text-lg font-medium leading-6 text-gray-900">
+              Alunos da Atividade {selectedAtividade?.nome}
+            </Dialog.Title>
+            <Dialog.Description className="mt-2 text-sm text-gray-500">
+              Selecione um aluno para adicionar a nota.
+            </Dialog.Description>
+            <div className="mt-4">
+              {alunos.length > 0 ? (
+                <ul className="space-y-2">
+                  {alunos.map((aluno) => (
+                    <li
+                      key={aluno.id}
+                      className="flex justify-between items-center"
                     >
-                      Passar nota
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                      <span>{aluno.nome}</span>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setSelectedAluno(aluno)
+                          setSelectedNotas((prev) => ({
+                            ...prev,
+                            [aluno.id]: prev[aluno.id] || 0,
+                          }))
+                        }}
+                      >
+                        Adicionar Nota
+                      </Button>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div className="text-gray-500">Nenhum aluno encontrado.</div>
+              )}
+            </div>
+
+            {/* Campo para Adicionar Nota */}
+            {selectedAluno && (
+              <div className="mt-4">
+                <Input
+                  type="number"
+                  placeholder="Nota"
+                  value={selectedNotas[selectedAluno.id] || ''}
+                  onChange={(e) => {
+                    const value = parseFloat(e.target.value)
+                    setSelectedNotas((prev) => ({
+                      ...prev,
+                      [selectedAluno.id]: isNaN(value) ? 0 : value,
+                    }))
+                  }}
+                />
+                <Button
+                  type="button"
+                  className="mt-2"
+                  onClick={() => {
+                    setSelectedAluno(null)
+                    handleSubmitNotas()
+                  }}
+                >
+                  Salvar Nota
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
-      )}
+      </Dialog>
     </div>
   )
 }

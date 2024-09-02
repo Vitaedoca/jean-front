@@ -24,6 +24,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import toast from 'react-hot-toast'
 
 // Types
 export type Turma = {
@@ -177,7 +178,9 @@ export default function Turmas() {
       clearTurma()
       fetchTurmas()
       fetchProfessores()
+      return toast.success('Turma criada com Sucesso!')
     } catch (error) {
+      return toast.error('Preencha todos os campos!')
       console.error('Erro ao cadastrar turma:', error)
     }
   }
@@ -199,6 +202,7 @@ export default function Turmas() {
           prevData.map((t) => (t.id === selectedTurma.id ? newTurma : t)),
         )
         setIsEditPopupOpen(false)
+        return toast.success('Turma editada com Sucesso!')
       } catch (error) {
         console.error('Erro ao editar turma:', error)
       }
@@ -218,6 +222,7 @@ export default function Turmas() {
         )
         setData((prevData) => prevData.filter((t) => t.id !== selectedTurma.id))
         setIsDeletePopupOpen(false)
+        return toast.success('Turma deletada com Sucesso!')
       } catch (error) {
         console.error('Erro ao deletar turma:', error)
       }
@@ -300,7 +305,7 @@ export default function Turmas() {
                     </Button>
                     <Button
                       onClick={() => handleDeleteClick(row.original)}
-                      color="secondary"
+                      variant={'destructive'}
                     >
                       <Trash className="h-4 w-4" />
                     </Button>
@@ -320,11 +325,35 @@ export default function Turmas() {
 
       {/* Modal para Adicionar Turma */}
       {isAddPopupOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-96">
-            <h2 className="text-xl font-semibold mb-4">Adicionar Turma</h2>
+        <div className="fixed inset-0 flex items-center justify-center bg-black/50 z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md relative">
+            {/* Close Button */}
+            <button
+              onClick={() => setIsAddPopupOpen(false)}
+              className="absolute top-3 right-3 text-gray-600 hover:text-gray-900 transition-colors duration-200"
+            >
+              <svg
+                className="h-6 w-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+            <h2 className="text-2xl font-semibold text-gray-900 mb-6">
+              Adicionar Turma
+            </h2>
             <div className="mb-4">
-              <label className="block mb-1">Nome</label>
+              <label className="block text-gray-700 text-sm font-medium mb-1">
+                Nome
+              </label>
               <Input
                 type="text"
                 value={newTurma.nome}
@@ -332,10 +361,13 @@ export default function Turmas() {
                   setNewTurma({ ...newTurma, nome: e.target.value })
                 }
                 placeholder="Nome da turma"
+                className="w-full p-2 border border-gray-300 rounded-md"
               />
             </div>
             <div className="mb-4">
-              <label className="block mb-1">Semestre</label>
+              <label className="block text-gray-700 text-sm font-medium mb-1">
+                Semestre
+              </label>
               <Input
                 type="text"
                 value={newTurma.semestre}
@@ -343,10 +375,13 @@ export default function Turmas() {
                   setNewTurma({ ...newTurma, semestre: e.target.value })
                 }
                 placeholder="Semestre"
+                className="w-full p-2 border border-gray-300 rounded-md"
               />
             </div>
             <div className="mb-4">
-              <label className="block mb-1">Ano</label>
+              <label className="block text-gray-700 text-sm font-medium mb-1">
+                Ano
+              </label>
               <Input
                 type="number"
                 value={newTurma.ano}
@@ -354,10 +389,13 @@ export default function Turmas() {
                   setNewTurma({ ...newTurma, ano: Number(e.target.value) })
                 }
                 placeholder="Ano"
+                className="w-full p-2 border border-gray-300 rounded-md"
               />
             </div>
             <div className="mb-4">
-              <label className="block mb-1">Professor</label>
+              <label className="block text-gray-700 text-sm font-medium mb-1">
+                Professor
+              </label>
               <select
                 value={newTurma.professor_id}
                 onChange={(e) =>
@@ -376,13 +414,9 @@ export default function Turmas() {
                 ))}
               </select>
             </div>
-            <div className="flex gap-2">
-              <Button onClick={handleAddTurma}>Adicionar</Button>
-              <Button
-                variant="outline"
-                onClick={() => setIsAddPopupOpen(false)}
-              >
-                Cancelar
+            <div className="flex w-full mt-6">
+              <Button onClick={handleAddTurma} className="flex w-full">
+                Adicionar
               </Button>
             </div>
           </div>
@@ -392,7 +426,27 @@ export default function Turmas() {
       {/* Modal para Editar Turma */}
       {isEditPopupOpen && selectedTurma && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50">
-          <div className="bg-white p-6 rounded-lg shadow-lg">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md relative">
+            {/* Close Button */}
+            <button
+              onClick={() => setIsEditPopupOpen(false)}
+              className="absolute top-3 right-3 text-gray-600 hover:text-gray-900 transition-colors duration-200"
+            >
+              <svg
+                className="h-6 w-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
             <h2 className="text-xl font-semibold mb-4">Editar Turma</h2>
             <div className="mb-4">
               <label className="block mb-1">Nome</label>
@@ -447,16 +501,9 @@ export default function Turmas() {
                 ))}
               </select>
             </div>
-            <div className="flex gap-2">
-              <Button onClick={handleEditTurma}>Salvar</Button>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setIsEditPopupOpen(false)
-                  clearTurma()
-                }}
-              >
-                Cancelar
+            <div className="flex w-full gap-2">
+              <Button className="w-full" onClick={handleEditTurma}>
+                Salvar
               </Button>
             </div>
           </div>
@@ -466,20 +513,38 @@ export default function Turmas() {
       {/* Modal para Deletar Turma */}
       {isDeletePopupOpen && selectedTurma && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/50">
-          <div className="bg-white p-6 rounded-lg shadow-lg">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-md relative">
+            {/* Close Button */}
+            <button
+              onClick={() => setIsDeletePopupOpen(false)}
+              className="absolute top-3 right-3 text-gray-600 hover:text-gray-900 transition-colors duration-200"
+            >
+              <svg
+                className="h-6 w-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
             <h2 className="text-xl font-semibold mb-4">Excluir Turma</h2>
             <p>
               Tem certeza de que deseja excluir a turma: {selectedTurma.nome}?
             </p>
-            <div className="flex gap-2 mt-4">
-              <Button onClick={handleDeleteTurma} variant="default">
-                Excluir
-              </Button>
+            <div className="flex w-full mt-4">
               <Button
-                variant="outline"
-                onClick={() => setIsDeletePopupOpen(false)}
+                className="w-full"
+                onClick={handleDeleteTurma}
+                variant="destructive"
               >
-                Cancelar
+                Excluir
               </Button>
             </div>
           </div>
