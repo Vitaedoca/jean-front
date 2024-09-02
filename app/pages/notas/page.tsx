@@ -303,6 +303,25 @@ export default function Notas() {
       >
         <div className="flex items-center justify-center min-h-screen px-4">
           <div className="relative bg-white rounded-lg shadow-xl w-full max-w-lg p-6">
+            <button
+              onClick={() => setAtividadesModalOpen(false)}
+              className="absolute top-3 right-3 text-gray-600 hover:text-gray-900 transition-colors duration-200"
+            >
+              <svg
+                className="h-6 w-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
             <Dialog.Title className="text-lg font-medium leading-6 text-gray-900">
               Atividades da Turma {selectedTurma?.nome}
             </Dialog.Title>
@@ -348,6 +367,25 @@ export default function Notas() {
       >
         <div className="flex items-center justify-center min-h-screen px-4">
           <div className="relative bg-white rounded-lg shadow-xl w-full max-w-lg p-6">
+            <button
+              onClick={() => setAlunosModalOpen(false)}
+              className="absolute top-3 right-3 text-gray-600 hover:text-gray-900 transition-colors duration-200"
+            >
+              <svg
+                className="h-6 w-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
             <Dialog.Title className="text-lg font-medium leading-6 text-gray-900">
               Alunos da Atividade {selectedAtividade?.nome}
             </Dialog.Title>

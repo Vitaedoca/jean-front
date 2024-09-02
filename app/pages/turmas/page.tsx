@@ -303,12 +303,12 @@ export default function Turmas() {
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
-                    <Button
+                    {/* <Button
                       onClick={() => handleDeleteClick(row.original)}
                       variant={'destructive'}
                     >
                       <Trash className="h-4 w-4" />
-                    </Button>
+                    </Button> */}
                   </TableCell>
                 </TableRow>
               ))
